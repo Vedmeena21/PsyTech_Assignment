@@ -79,7 +79,7 @@ class Analyzer:
             checkpoint_path: Path to trained model weights (optional)
         """
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        print(f"🔧 Initializing Analyzer on device: {self.device}")
+        print(f"Initializing Analyzer on device: {self.device}")
         
         # Load tokenizer
         self.tokenizer = AutoTokenizer.from_pretrained("xlm-roberta-base")
@@ -92,16 +92,16 @@ class Analyzer:
             try:
                 state_dict = torch.load(checkpoint_path, map_location=self.device)
                 self.model.load_state_dict(state_dict)
-                print(f"✅ Loaded weights from {checkpoint_path}")
+                print(f"Loaded weights from {checkpoint_path}")
             except Exception as e:
-                print(f"⚠️ Could not load weights: {e}")
+                print(f"WARNING: Could not load weights: {e}")
                 print("   Using randomly initialized model")
         else:
-            print("⚠️ No checkpoint provided - using untrained model")
+            print("WARNING: No checkpoint provided - using untrained model")
             print("   Results will be random until model is trained")
         
         self.model.eval()
-        print("✅ Analyzer ready")
+        print("Analyzer ready")
     
     def analyze(self, text: str, category_threshold: float = 0.4) -> dict:
         """

@@ -107,7 +107,7 @@ def train_model(
 ):
     """Train the multi-task model."""
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    print(f"🔧 Training on device: {device}")
+    print(f"Training on device: {device}")
     
     # Initialize tokenizer and model
     tokenizer = AutoTokenizer.from_pretrained("xlm-roberta-base")
@@ -137,7 +137,7 @@ def train_model(
     optimizer = AdamW(model.parameters(), lr=learning_rate)
     
     # Training loop
-    print(f"\n🚀 Starting training for {epochs} epochs...")
+    print(f"\nStarting training for {epochs} epochs...")
     print(f"   Training samples: {len(train_data)}")
     print(f"   Batch size: {batch_size}")
     print(f"   Learning rate: {learning_rate}")
@@ -150,14 +150,14 @@ def train_model(
         if epoch < freeze_epochs:
             for param in model.encoder.parameters():
                 param.requires_grad = False
-            print(f"\n📌 Epoch {epoch + 1}/{epochs} (encoder FROZEN)")
+            print(f"\nEpoch {epoch + 1}/{epochs} (encoder FROZEN)")
         else:
             for param in model.encoder.parameters():
                 param.requires_grad = True
             if epoch == freeze_epochs:
-                print(f"\n🔓 Epoch {epoch + 1}/{epochs} (encoder UNFROZEN)")
+                print(f"\nEpoch {epoch + 1}/{epochs} (encoder UNFROZEN)")
             else:
-                print(f"\n📊 Epoch {epoch + 1}/{epochs}")
+                print(f"\nEpoch {epoch + 1}/{epochs}")
         
         model.train()
         total_loss = 0.0
@@ -224,26 +224,26 @@ def train_model(
                 best_val_loss = avg_val_loss
                 os.makedirs(os.path.dirname(checkpoint_path), exist_ok=True)
                 torch.save(model.state_dict(), checkpoint_path)
-                print(f"   ✅ Saved best model to {checkpoint_path}")
+                print(f"   Saved best model to {checkpoint_path}")
     
     # Save final model if no validation data
     if not val_data:
         os.makedirs(os.path.dirname(checkpoint_path), exist_ok=True)
         torch.save(model.state_dict(), checkpoint_path)
-        print(f"\n✅ Training complete! Model saved to {checkpoint_path}")
+        print(f"\nTraining complete! Model saved to {checkpoint_path}")
     else:
-        print(f"\n✅ Training complete! Best model saved to {checkpoint_path}")
+        print(f"\nTraining complete! Best model saved to {checkpoint_path}")
     
     return model
 
 
 if __name__ == "__main__":
     print("=" * 60)
-    print("🎯 Multi-Task Hinglish Classifier Training (5K Dataset)")
+    print("Multi-Task Hinglish Classifier Training (5K Dataset)")
     print("=" * 60)
     
     # Load data from JSONL
-    print("\n📂 Loading data from train_5000.jsonl...")
+    print("\nLoading data from train_5000.jsonl...")
     all_data = load_jsonl("train_5000.jsonl")
     print(f"   Loaded {len(all_data)} samples")
     
@@ -269,6 +269,6 @@ if __name__ == "__main__":
     )
     
     print("\n" + "=" * 60)
-    print("✅ Training complete!")
+    print("Training complete!")
     print("   Restart the backend to load the trained model.")
     print("=" * 60)

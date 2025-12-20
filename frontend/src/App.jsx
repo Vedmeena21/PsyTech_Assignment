@@ -132,7 +132,7 @@ function App() {
                 {/* Header */}
                 <div className="text-center mb-8 pt-8">
                     <h1 className="text-5xl font-bold text-orange-800 mb-3">
-                        🕉️ Krishna AI Content Intelligence
+                        Krishna AI Content Intelligence
                     </h1>
                     <p className="text-lg text-gray-600">
                         Devotional Content Moderation & Tagging Dashboard
@@ -141,7 +141,7 @@ function App() {
                         Speak or type in Hinglish for real-time AI analysis
                     </p>
                     <p className="text-xs text-blue-600 mt-1">
-                        🎤 Voice → Whisper ASR (Backend) | 🧠 Multi-task Transformer
+                        Voice → Whisper ASR (Backend) | Multi-task Transformer
                     </p>
                 </div>
 
@@ -173,8 +173,8 @@ function App() {
                             <div className="text-center">
                                 <p className="text-sm font-medium text-gray-700">
                                     {isRecording
-                                        ? '🔴 Recording... Click to stop'
-                                        : '🎤 Click to speak in Hinglish'}
+                                        ? 'Recording... Click to stop'
+                                        : 'Click to speak in Hinglish'}
                                 </p>
                                 <p className="text-xs text-gray-500 mt-1">
                                     Audio sent to Whisper for transcription
@@ -219,7 +219,7 @@ function App() {
                         {transcription && !error && (
                             <div className="mt-4 p-4 bg-orange-50 border-l-4 border-orange-400 rounded-lg">
                                 <p className="text-sm font-semibold text-orange-900 mb-2">
-                                    📝 Transcription:
+                                    Transcription:
                                 </p>
                                 <p className="text-gray-800 leading-relaxed">{transcription}</p>
                             </div>
@@ -229,7 +229,7 @@ function App() {
                     {/* Results Section */}
                     <div className="bg-white rounded-xl shadow-lg p-6 border border-orange-100">
                         <h2 className="text-2xl font-semibold text-gray-800 mb-6">
-                            📊 Analysis Results
+                            Analysis Results
                         </h2>
 
                         {loading ? (
@@ -243,7 +243,7 @@ function App() {
                                 {/* Moderation Results */}
                                 <div>
                                     <h3 className="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b-2 border-gray-200">
-                                        🛡️ Moderation Results
+                                        Moderation Results
                                     </h3>
 
                                     {/* Sentiment */}
@@ -294,7 +294,7 @@ function App() {
                                 {/* Devotional Tags */}
                                 <div>
                                     <h3 className="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b-2 border-gray-200">
-                                        🏷️ Devotional Category Tags
+                                        Devotional Category Tags
                                     </h3>
                                     {results.categories && results.categories.length > 0 ? (
                                         <div className="space-y-3">

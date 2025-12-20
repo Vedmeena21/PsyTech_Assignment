@@ -1,33 +1,33 @@
-# 🕉️ Krishna AI Content Analyzer
+# Krishna AI Content Analyzer
 
 A production-ready **Hinglish content moderation and devotional tagging system** using state-of-the-art NLP and speech recognition.
 
-## 🎯 Features
+## Features
 
-### 1. **Speech-to-Text (ASR)**
+### 1. Speech-to-Text (ASR)
 - **Whisper (openai/whisper-small)** for multilingual transcription
-- Automatic Devanagari → Latin transliteration
+- Automatic Devanagari to Latin transliteration
 - Optimized for Hinglish (Hindi + English code-switching)
 
-### 2. **Multi-Task NLP Classification**
+### 2. Multi-Task NLP Classification
 Single XLM-RoBERTa transformer with 3 specialized heads:
 
-#### **Sentiment Analysis**
+#### Sentiment Analysis
 - Classes: Positive, Neutral, Negative
 - Confidence scores for each prediction
 
-#### **Toxicity Detection**
+#### Toxicity Detection
 - Classes: Safe, Offensive/Hate Speech, Spam/Promotion
 - Policy-based content moderation
 
-#### **Devotional Category Tagging** (Multi-label)
+#### Devotional Category Tagging (Multi-label)
 - Career
 - Love Life
 - Family Issues
 - Health Issues
 - Mood Issues
 
-## 🏗️ Architecture
+## Architecture
 
 ```
 User Voice Input
@@ -47,12 +47,12 @@ UI Display
 ```
 
 **Key Design Principles:**
-- ✅ Single model, single forward pass
-- ✅ Pure probabilistic inference (no keywords/rules)
-- ✅ Class-weighted loss for imbalanced data
-- ✅ Multi-label category classification
+- Single model, single forward pass
+- Pure probabilistic inference (no keywords/rules)
+- Class-weighted loss for imbalanced data
+- Multi-label category classification
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 - Python 3.9+
@@ -97,7 +97,7 @@ npm start
 
 Frontend runs on: **http://localhost:3000**
 
-## 📊 Model Training
+## Model Training
 
 ### Dataset
 - **5,000 synthetic Hinglish samples**
@@ -122,7 +122,7 @@ Loss: sentiment_loss + toxicity_loss + 0.8 * category_loss
 - **Toxicity Precision: ~90%**
 - **Category F1: ~80%**
 
-## 🧪 Testing
+## Testing
 
 ### API Testing
 
@@ -156,7 +156,7 @@ curl http://localhost:50010/test
 
 Returns predictions on 5 sample Hinglish queries.
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 krishna-ai-dashboard/
@@ -178,7 +178,7 @@ krishna-ai-dashboard/
 └── README.md
 ```
 
-## 🔧 API Reference
+## API Reference
 
 ### POST `/analyze`
 
@@ -225,7 +225,7 @@ Health check endpoint.
 ### GET `/test`
 Run test suite on sample queries.
 
-## 🎓 Technical Details
+## Technical Details
 
 ### Why XLM-RoBERTa?
 - Multilingual support (100+ languages)
@@ -245,7 +245,7 @@ Whisper Output (Devanagari) → Indic Transliteration → Latin Script
 "मैं ठीक हूं" → "main thik hun"
 ```
 
-## 🚨 Moderation Policy
+## Moderation Policy
 
 | Condition | Action |
 |-----------|--------|
@@ -253,16 +253,16 @@ Whisper Output (Devanagari) → Indic Transliteration → Latin Script
 | Spam > 75% | Rate limit user |
 | Safe | Allow normal flow |
 
-## 📈 Future Improvements
+## Future Improvements
 
-- [ ] Increase training data to 10K+ samples
-- [ ] Add temperature scaling for calibration
-- [ ] Implement GPU support for faster training
-- [ ] Add more devotional categories
-- [ ] Deploy on cloud (AWS/GCP)
-- [ ] Add user feedback loop for continuous learning
+- Increase training data to 10K+ samples
+- Add temperature scaling for calibration
+- Implement GPU support for faster training
+- Add more devotional categories
+- Deploy on cloud (AWS/GCP)
+- Add user feedback loop for continuous learning
 
-## 🤝 Contributing
+## Contributing
 
 This is an internship project demonstrating:
 - Multi-task transformer architecture
@@ -270,15 +270,15 @@ This is an internship project demonstrating:
 - Full-stack integration (React + Flask)
 - Speech recognition + NLP
 
-## 📄 License
+## License
 
 MIT License - See LICENSE file for details
 
-## 👤 Author
+## Author
 
 **Ved** - AI/ML Internship Project
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - OpenAI Whisper for ASR
 - Hugging Face Transformers
@@ -287,4 +287,4 @@ MIT License - See LICENSE file for details
 
 ---
 
-**Built with ❤️ for Krishna AI**
+**Built for Krishna AI**

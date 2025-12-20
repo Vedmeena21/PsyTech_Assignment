@@ -255,8 +255,8 @@ with open("train_5000.jsonl", "w", encoding="utf-8") as f:
     for row in data:
         f.write(json.dumps(row, ensure_ascii=False) + "\n")
 
-print("✅ Generated train_5000.jsonl with 5000 samples")
-print(f"\n📊 Distribution:")
+print("Generated train_5000.jsonl with 5000 samples")
+print(f"\nDistribution:")
 print(f"   Sentiment: {sum(1 for d in data if d['sentiment']=='positive')} positive, "
       f"{sum(1 for d in data if d['sentiment']=='neutral')} neutral, "
       f"{sum(1 for d in data if d['sentiment']=='negative')} negative")

@@ -34,25 +34,25 @@ def load_models():
     global asr_model, analyzer
     
     print("=" * 50)
-    print("🚀 Krishna AI Backend Starting...")
+    print("Krishna AI Backend Starting...")
     print("=" * 50)
     
     # Load Whisper ASR
-    print("\n📢 Loading Whisper ASR model (small)...")
+    print("\nLoading Whisper ASR model (small)...")
     asr_model = whisper.load_model("small")
-    print("✅ Whisper loaded successfully")
+    print("Whisper loaded successfully")
     
     # Load Multi-task Analyzer
-    print("\n🧠 Loading Multi-task NLP model...")
+    print("\nLoading Multi-task NLP model...")
     checkpoint_path = os.path.join(os.path.dirname(__file__), "checkpoints", "model.pt")
     if os.path.exists(checkpoint_path):
         analyzer = Analyzer(checkpoint_path=checkpoint_path)
     else:
         analyzer = Analyzer()
-    print("✅ Analyzer loaded successfully")
+    print("Analyzer loaded successfully")
     
     print("\n" + "=" * 50)
-    print("✅ All models ready!")
+    print("All models ready!")
     print("=" * 50 + "\n")
 
 
@@ -202,7 +202,7 @@ def analyze():
         })
     
     except Exception as e:
-        print(f"❌ Error in /analyze: {e}")
+        print(f"Error in /analyze: {e}")
         import traceback
         traceback.print_exc()
         return jsonify({
@@ -242,5 +242,5 @@ load_models()
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 50010))
-    print(f"\n🌐 Starting server on port {port}")
+    print(f"\nStarting server on port {port}")
     app.run(host="0.0.0.0", port=port, debug=False)
