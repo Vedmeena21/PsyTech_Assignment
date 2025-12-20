@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { Mic, MicOff, Send, Loader2, AlertCircle } from 'lucide-react';
 import axios from 'axios';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:50010';
 
 function App() {
     const [isRecording, setIsRecording] = useState(false);
@@ -10,62 +10,85 @@ function App() {
     const [results, setResults] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
-    const recognitionRef = useRef(null);
+    const mediaRecorderRef = useRef(null);
+    const audioChunksRef = useRef([]);
 
-    // Initialize Speech Recognition
-    const initSpeechRecognition = () => {
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SpeechRecognition) {
-            setError('Speech recognition not supported. Please use Chrome or Edge.');
-            return null;
-        }
-
-        const recognition = new SpeechRecognition();
-        recognition.lang = 'hi-IN'; // Hindi-India for Hinglish
-        recognition.interimResults = false;
-        recognition.maxAlternatives = 1;
-        recognition.continuous = false;
-
-        return recognition;
-    };
-
-    // Start recording
-    const startRecording = () => {
+    // Start recording audio
+    const startRecording = async () => {
         setError('');
         setTranscription('');
         setResults(null);
+        audioChunksRef.current = [];
 
-        const recognition = initSpeechRecognition();
-        if (!recognition) return;
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const mediaRecorder = new MediaRecorder(stream, {
+                mimeType: 'audio/webm;codecs=opus'
+            });
 
-        recognitionRef.current = recognition;
+            mediaRecorder.ondataavailable = (event) => {
+                if (event.data.size > 0) {
+                    audioChunksRef.current.push(event.data);
+                }
+            };
 
-        recognition.onstart = () => {
+            mediaRecorder.onstop = async () => {
+                // Stop all tracks
+                stream.getTracks().forEach(track => track.stop());
+
+                // Create audio blob
+                const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+
+                // Send to backend for Whisper transcription + analysis
+                await analyzeAudio(audioBlob);
+            };
+
+            mediaRecorderRef.current = mediaRecorder;
+            mediaRecorder.start();
             setIsRecording(true);
-        };
-
-        recognition.onresult = (event) => {
-            const text = event.results[0][0].transcript;
-            setTranscription(text);
-            analyzeText(text);
-        };
-
-        recognition.onerror = (event) => {
-            setError(`Speech recognition error: ${event.error}`);
-            setIsRecording(false);
-        };
-
-        recognition.onend = () => {
-            setIsRecording(false);
-        };
-
-        recognition.start();
+        } catch (err) {
+            console.error('Microphone access error:', err);
+            setError('Microphone access denied. Please allow microphone permissions.');
+        }
     };
 
     // Stop recording
     const stopRecording = () => {
-        if (recognitionRef.current) {
-            recognitionRef.current.stop();
+        if (mediaRecorderRef.current && isRecording) {
+            mediaRecorderRef.current.stop();
+            setIsRecording(false);
+        }
+    };
+
+    // Analyze audio via backend API (Whisper + Multi-task model)
+    const analyzeAudio = async (audioBlob) => {
+        setLoading(true);
+        setError('');
+
+        try {
+            const formData = new FormData();
+            formData.append('audio', audioBlob, 'recording.webm');
+
+            const response = await axios.post(`${API_URL}/analyze`, formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
+
+            if (response.data.success) {
+                setTranscription(response.data.transcription);
+                setResults(response.data.data);
+            } else {
+                setError(response.data.error || 'Analysis failed');
+            }
+        } catch (err) {
+            console.error('API Error:', err);
+            setError(
+                err.response?.data?.error ||
+                'Failed to connect to backend. Make sure the server is running.'
+            );
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -80,6 +103,7 @@ function App() {
             });
 
             if (response.data.success) {
+                setTranscription(response.data.transcription);
                 setResults(response.data.data);
             } else {
                 setError(response.data.error || 'Analysis failed');
@@ -88,7 +112,7 @@ function App() {
             console.error('API Error:', err);
             setError(
                 err.response?.data?.error ||
-                'Failed to connect to backend. Make sure the server is running on port 5000.'
+                'Failed to connect to backend. Make sure the server is running.'
             );
         } finally {
             setLoading(false);
@@ -116,6 +140,9 @@ function App() {
                     <p className="text-sm text-gray-500 mt-2">
                         Speak or type in Hinglish for real-time AI analysis
                     </p>
+                    <p className="text-xs text-blue-600 mt-1">
+                        🎤 Voice → Whisper ASR (Backend) | 🧠 Multi-task Transformer
+                    </p>
                 </div>
 
                 {/* Main Content Grid */}
@@ -133,8 +160,8 @@ function App() {
                                 onClick={isRecording ? stopRecording : startRecording}
                                 disabled={loading}
                                 className={`w-32 h-32 rounded-full flex items-center justify-center transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed ${isRecording
-                                        ? 'bg-red-500 hover:bg-red-600 animate-pulse'
-                                        : 'bg-orange-500 hover:bg-orange-600'
+                                    ? 'bg-red-500 hover:bg-red-600 animate-pulse'
+                                    : 'bg-orange-500 hover:bg-orange-600'
                                     } text-white shadow-2xl`}
                             >
                                 {isRecording ? (
@@ -150,7 +177,7 @@ function App() {
                                         : '🎤 Click to speak in Hinglish'}
                                 </p>
                                 <p className="text-xs text-gray-500 mt-1">
-                                    Works best in Chrome/Edge
+                                    Audio sent to Whisper for transcription
                                 </p>
                             </div>
                         </div>
@@ -209,7 +236,7 @@ function App() {
                             <div className="flex flex-col items-center justify-center h-96 space-y-4">
                                 <Loader2 className="w-16 h-16 text-orange-500 animate-spin" />
                                 <p className="text-gray-600 font-medium">Analyzing content...</p>
-                                <p className="text-sm text-gray-500">This may take 2-3 seconds</p>
+                                <p className="text-sm text-gray-500">Whisper ASR + Multi-task Transformer</p>
                             </div>
                         ) : results ? (
                             <div className="space-y-6">
@@ -224,8 +251,8 @@ function App() {
                                         <div className="flex justify-between items-center mb-3">
                                             <span className="font-semibold text-gray-700">Sentiment</span>
                                             <span className={`px-3 py-1 rounded-full text-sm font-bold ${results.sentiment.label === 'positive' ? 'bg-green-500 text-white' :
-                                                    results.sentiment.label === 'negative' ? 'bg-red-500 text-white' :
-                                                        'bg-gray-500 text-white'
+                                                results.sentiment.label === 'negative' ? 'bg-red-500 text-white' :
+                                                    'bg-gray-500 text-white'
                                                 }`}>
                                                 {results.sentiment.label.toUpperCase()}
                                             </span>
@@ -246,8 +273,8 @@ function App() {
                                         <div className="flex justify-between items-center mb-3">
                                             <span className="font-semibold text-gray-700">Toxicity</span>
                                             <span className={`px-3 py-1 rounded-full text-sm font-bold ${results.toxicity.label === 'safe' ? 'bg-green-500 text-white' :
-                                                    results.toxicity.label === 'offensive' ? 'bg-red-500 text-white' :
-                                                        'bg-yellow-500 text-white'
+                                                results.toxicity.label === 'offensive' ? 'bg-red-500 text-white' :
+                                                    'bg-yellow-500 text-white'
                                                 }`}>
                                                 {results.toxicity.label.toUpperCase()}
                                             </span>
@@ -275,7 +302,7 @@ function App() {
                                                 <div key={idx} className="p-4 bg-gradient-to-r from-orange-50 to-orange-100 rounded-lg border border-orange-200">
                                                     <div className="flex justify-between items-center mb-2">
                                                         <span className="font-semibold text-gray-800 capitalize text-base">
-                                                            {cat.label}
+                                                            {cat.label.replace('_', ' ')}
                                                         </span>
                                                         <span className="text-sm font-bold text-orange-700">
                                                             {(cat.confidence * 100).toFixed(1)}%
@@ -293,7 +320,7 @@ function App() {
                                     ) : (
                                         <div className="text-center py-8">
                                             <p className="text-gray-500 italic">
-                                                No categories detected with high confidence
+                                                No categories detected above threshold (40%)
                                             </p>
                                         </div>
                                     )}

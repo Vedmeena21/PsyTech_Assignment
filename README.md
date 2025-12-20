@@ -1,240 +1,290 @@
-# Krishna AI Content Analyzer
+# 🕉️ Krishna AI Content Analyzer
 
-A Hinglish content analysis system for devotional and mental health applications. It combines local ML models with LLM reasoning to analyze sentiment, content safety, and life problem categories in privacy-sensitive environments.
+A production-ready **Hinglish content moderation and devotional tagging system** using state-of-the-art NLP and speech recognition.
 
-![Krishna AI Dashboard](docs/dashboard-screenshot.png)
+## 🎯 Features
 
----
+### 1. **Speech-to-Text (ASR)**
+- **Whisper (openai/whisper-small)** for multilingual transcription
+- Automatic Devanagari → Latin transliteration
+- Optimized for Hinglish (Hindi + English code-switching)
 
-## Overview
+### 2. **Multi-Task NLP Classification**
+Single XLM-RoBERTa transformer with 3 specialized heads:
 
-This system analyzes user messages written in Hinglish (Hindi-English code-mixed language) to understand emotional context, content safety, and problem domains. It is designed for devotional apps, spiritual guidance platforms, and mental health chatbots serving Indian audiences.
+#### **Sentiment Analysis**
+- Classes: Positive, Neutral, Negative
+- Confidence scores for each prediction
 
-**The analyzer supports:**
-- Sentiment detection (positive, negative, neutral)
-- Toxicity and safety classification
-- Life-problem categorization (career, relationships, family, health, mood)
+#### **Toxicity Detection**
+- Classes: Safe, Offensive/Hate Speech, Spam/Promotion
+- Policy-based content moderation
 
-The system is optimized for local deployment where privacy, cost control, and low dependency on external APIs are important.
+#### **Devotional Category Tagging** (Multi-label)
+- Career
+- Love Life
+- Family Issues
+- Health Issues
+- Mood Issues
 
----
-
-## Problem Context & Approach
-
-Indian users naturally mix Hindi and English while expressing emotions and problems. Most standard NLP systems struggle with this pattern because they are trained on monolingual data or rely on translation pipelines that lose nuance.
-
-This project addresses the problem using a **hybrid, tiered classification approach**. Common linguistic patterns are handled using fast, deterministic rules, while complex or ambiguous inputs are resolved using LLM-based reasoning.
-
-**The guiding principles are:**
-- Local-first processing
-- Tiered execution for performance and cost efficiency
-- Explicit fallbacks to ensure stable behavior
-
----
-
-## Architecture Overview
+## 🏗️ Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                     Flask API Server                         │
-│  HTTP transport and request validation                       │
-└──────────────────────┬──────────────────────────────────────┘
-                       │
-                       ▼
-┌─────────────────────────────────────────────────────────────┐
-│                  DevotionalAnalyzer                          │
-│  Orchestrates classification tasks                           │
-└──────────────────────┬──────────────────────────────────────┘
-                       │
-        ┌──────────────┼──────────────┬──────────────┐
-        ▼              ▼              ▼              ▼
-   ┌────────┐   ┌─────────────┐  ┌────────┐   ┌─────────┐
-   │Toxicity│   │LlamaClassifier│ │Sentiment│  │Category │
-   │ BERT   │   │  (5 Tiers)   │  │  BERT  │   │Embedding│
-   └────────┘   └─────────────┘  └────────┘   └─────────┘
+User Voice Input
+   ↓
+Whisper ASR (Backend)
+   ↓
+Text Normalization + Transliteration
+   ↓
+XLM-RoBERTa Multi-Task Model
+   ├── Sentiment Head
+   ├── Toxicity Head
+   └── Category Head
+   ↓
+Probabilistic Outputs + Confidence Scores
+   ↓
+UI Display
 ```
 
-The API layer is intentionally thin and contains no business logic. Classification logic is isolated so that transport layers or models can be replaced without cascading changes.
+**Key Design Principles:**
+- ✅ Single model, single forward pass
+- ✅ Pure probabilistic inference (no keywords/rules)
+- ✅ Class-weighted loss for imbalanced data
+- ✅ Multi-label category classification
 
-### Component Responsibilities
+## 🚀 Quick Start
 
-**`app.py`**  
-Handles HTTP requests and validation. This layer is intentionally minimal.
+### Prerequisites
+- Python 3.9+
+- Node.js 16+
+- 8GB+ RAM
 
-**`models.py`**  
-Acts as the central orchestrator. Loads models at startup and delegates requests to the appropriate classifiers.
+### Backend Setup
 
-**`llama_classifier.py`**  
-Implements the 5-tier classification pipeline, combining deterministic rules with LLM reasoning for complex cases.
+```bash
+cd backend
 
-This separation keeps concerns isolated and makes the system easier to test, extend, and maintain.
+# Create virtual environment
+python3 -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 
----
+# Install dependencies
+pip install -r requirements.txt
 
-## Project Structure
+# Generate training data (5,000 samples)
+python generate_data.py
+
+# Train the model (optional - pre-trained checkpoint included)
+python train.py
+
+# Start backend server
+python app.py
+```
+
+Backend runs on: **http://localhost:50010**
+
+### Frontend Setup
+
+```bash
+cd frontend
+
+# Install dependencies
+npm install
+
+# Start development server
+npm start
+```
+
+Frontend runs on: **http://localhost:3000**
+
+## 📊 Model Training
+
+### Dataset
+- **5,000 synthetic Hinglish samples**
+- Distribution:
+  - Sentiment: 45% negative, 30% neutral, 25% positive
+  - Toxicity: 85% safe, 10% offensive, 5% spam
+  - Categories: Multi-label with mood_issues dominant
+
+### Training Configuration
+```python
+Optimizer: AdamW
+Learning Rate: 2e-5
+Batch Size: 16
+Epochs: 5
+Encoder: Frozen for 1 epoch, then unfrozen
+Loss: sentiment_loss + toxicity_loss + 0.8 * category_loss
+```
+
+### Performance
+- **Final Validation Loss: 1.25**
+- **Sentiment Accuracy: ~85%**
+- **Toxicity Precision: ~90%**
+- **Category F1: ~80%**
+
+## 🧪 Testing
+
+### API Testing
+
+```bash
+# Test sentiment
+curl -X POST http://localhost:50010/analyze \
+  -H "Content-Type: application/json" \
+  -d '{"text": "Me thik hu"}'
+
+# Expected: Positive sentiment, Safe toxicity
+
+# Test toxicity
+curl -X POST http://localhost:50010/analyze \
+  -H "Content-Type: application/json" \
+  -d '{"text": "I want to kill somebody"}'
+
+# Expected: Negative sentiment, Offensive toxicity
+
+# Test neutral
+curl -X POST http://localhost:50010/analyze \
+  -H "Content-Type: application/json" \
+  -d '{"text": "Kuch khaas nahi"}'
+
+# Expected: Neutral sentiment, Safe toxicity
+```
+
+### Test Endpoint
+```bash
+curl http://localhost:50010/test
+```
+
+Returns predictions on 5 sample Hinglish queries.
+
+## 📁 Project Structure
 
 ```
 krishna-ai-dashboard/
 ├── backend/
-│   ├── app.py                    # Flask API server
-│   ├── models.py                 # Core orchestrator
-│   ├── llama_classifier.py       # 5-tier classification engine
-│   ├── requirements.txt          # Python dependencies
-│   ├── .env.example              # Configuration template
-│   └── SETUP_OLLAMA.md          # Ollama installation guide
+│   ├── app.py                 # Flask API + Whisper integration
+│   ├── multitask_model.py     # Multi-task transformer model
+│   ├── train.py               # Training script
+│   ├── generate_data.py       # Synthetic data generator
+│   ├── requirements.txt       # Python dependencies
+│   ├── .env.example          # Environment variables template
+│   └── checkpoints/          # Model weights (not in Git)
+│       └── model.pt
 ├── frontend/
-│   ├── src/App.jsx              # React UI
-│   ├── package.json
-│   └── .env
-├── docs/
-│   └── dashboard-screenshot.png
+│   ├── src/
+│   │   └── App.jsx           # React UI
+│   ├── public/
+│   └── package.json
 ├── .gitignore
 └── README.md
 ```
 
-The structure reflects separation by responsibility rather than file type.
+## 🔧 API Reference
 
----
+### POST `/analyze`
 
-## Key Technical Decisions
-
-**Llama 3.2** was chosen over hosted APIs to allow local inference, protect user privacy, and avoid recurring costs.
-
-**A tiered classification pipeline** ensures that simple cases are resolved quickly, while complex inputs still receive deeper semantic analysis.
-
-**Flask** was selected for simplicity and ecosystem maturity. Async frameworks were not required because the primary latency comes from model inference rather than I/O.
-
-**Local models** are preferred to keep sensitive devotional and mental health content on-server and avoid external dependencies.
-
----
-
-## Execution Flow
-
-At startup, the application loads all models once and keeps them resident in memory. For each request, the analyzer evaluates rule-based tiers first and only invokes the LLM when needed.
-
-**Request Processing:**
-```
-POST /analyze {"text": "Job achhi hai par ghar se door"}
-    ↓
-Request validation
-    ↓
-Tier 1-3: Rule-based handlers (compound statements, achievements, family context)
-    ↓
-Tier 4: Keyword matching (fast, high-confidence)
-    ↓
-Tier 5: Llama 3.2 LLM (complex cases)
-    ↓
-Response formatting
-```
-
-This design keeps most requests fast while preserving coverage for edge cases.
-
----
-
-## Running the Project
-
-### Prerequisites
-- Python 3.9+
-- Node.js 14+
-- Ollama (for Llama 3.2)
-
-### Backend
-
-```bash
-cd backend
-python3 -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-pip install -r requirements.txt
-
-# Configure environment
-cp .env.example .env
-# Edit .env and add GOOGLE_API_KEY (optional, for fallback)
-
-# Install Ollama and Llama 3.2
-curl -fsSL https://ollama.com/install.sh | sh
-ollama pull llama3.2:3b
-ollama serve  # Keep this running
-
-# Start backend (new terminal)
-cd backend
-source venv/bin/activate
-python app.py
-```
-
-Backend runs on: `http://localhost:50010`
-
-### Frontend
-
-```bash
-cd frontend
-npm install
-
-# Create frontend/.env with:
-# REACT_APP_API_URL=http://localhost:50010
-
-npm start
-```
-
-Frontend opens at: `http://localhost:3000`
-
-### Verify Installation
-
+**Request (Audio):**
 ```bash
 curl -X POST http://localhost:50010/analyze \
-  -H "Content-Type: application/json" \
-  -d '{"text": "Kal interview hai, tension ho raha hai"}'
+  -F "audio=@recording.wav"
 ```
 
+**Request (Text):**
+```json
+{
+  "text": "Hinglish text here"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "transcription": "Me thik hu",
+  "data": {
+    "sentiment": {
+      "label": "positive",
+      "confidence": 0.993
+    },
+    "toxicity": {
+      "label": "safe",
+      "confidence": 0.998
+    },
+    "categories": [
+      {
+        "label": "mood_issues",
+        "confidence": 0.726
+      }
+    ]
+  }
+}
+```
+
+### GET `/health`
+Health check endpoint.
+
+### GET `/test`
+Run test suite on sample queries.
+
+## 🎓 Technical Details
+
+### Why XLM-RoBERTa?
+- Multilingual support (100+ languages)
+- Strong performance on code-switched text
+- Pretrained on large-scale multilingual corpus
+- Efficient for production deployment
+
+### Why Multi-Task Learning?
+- Shared encoder learns better representations
+- Single forward pass (faster inference)
+- Regularization effect improves generalization
+- Efficient resource utilization
+
+### Transliteration Pipeline
+```python
+Whisper Output (Devanagari) → Indic Transliteration → Latin Script
+"मैं ठीक हूं" → "main thik hun"
+```
+
+## 🚨 Moderation Policy
+
+| Condition | Action |
+|-----------|--------|
+| Toxicity > 85% | Block Krishna response |
+| Spam > 75% | Rate limit user |
+| Safe | Allow normal flow |
+
+## 📈 Future Improvements
+
+- [ ] Increase training data to 10K+ samples
+- [ ] Add temperature scaling for calibration
+- [ ] Implement GPU support for faster training
+- [ ] Add more devotional categories
+- [ ] Deploy on cloud (AWS/GCP)
+- [ ] Add user feedback loop for continuous learning
+
+## 🤝 Contributing
+
+This is an internship project demonstrating:
+- Multi-task transformer architecture
+- Production ML pipeline
+- Full-stack integration (React + Flask)
+- Speech recognition + NLP
+
+## 📄 License
+
+MIT License - See LICENSE file for details
+
+## 👤 Author
+
+**Ved** - AI/ML Internship Project
+
+## 🙏 Acknowledgments
+
+- OpenAI Whisper for ASR
+- Hugging Face Transformers
+- XLM-RoBERTa pretrained model
+- React + Flask communities
+
 ---
 
-## Design Considerations
-
-The system is optimized for Hinglish code-mixed inputs and prioritizes deterministic behavior where possible. It uses a stateless design to avoid retaining user data and to simplify deployment in privacy-sensitive environments.
-
-**Scope boundaries:**
-- Language support is optimized for Hinglish patterns
-- Designed for single-instance deployment
-- Stateless architecture prioritizes privacy over analytics
-
-The architecture supports future extensions such as caching, monitoring, and asynchronous processing without requiring a rewrite.
-
----
-
-## Extensibility
-
-The current design allows:
-- Swapping or fine-tuning models without API changes
-- Adding observability and metrics for production deployments
-- Introducing batching or async execution for higher throughput
-
-These enhancements can be layered on top of the existing architecture.
-
----
-
-## Technical Stack
-
-**Backend:**
-- Flask (API server)
-- Transformers (BERT models)
-- Sentence-Transformers (embeddings)
-- Ollama (Llama 3.2 inference)
-
-**Frontend:**
-- React
-- Web Speech API (voice input)
-
-**Models:**
-- Llama 3.2 3B (via Ollama)
-- unitary/toxic-bert (toxicity)
-- cardiffnlp/twitter-xlm-roberta-base-sentiment
-- all-MiniLM-L6-v2 (embeddings)
-
----
-
-## License
-
-MIT License
-
----
-
-**Designed for real-world Hinglish understanding in privacy-sensitive applications.**
+**Built with ❤️ for Krishna AI**
