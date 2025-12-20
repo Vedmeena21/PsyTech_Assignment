@@ -1,15 +1,15 @@
 # Krishna AI Content Analyzer
 
-A production-ready **Hinglish content moderation and devotional tagging system** using state-of-the-art NLP and speech recognition.
+A production-ready **Hinglish content moderation and devotional tagging system** integrated with a real-time React frontend and a Multi-Task Transformer backend.
 
 ## Features
 
-### 1. Speech-to-Text (ASR)
-- **Whisper (openai/whisper-small)** for multilingual transcription
-- Automatic Devanagari to Latin transliteration
-- Optimized for Hinglish (Hindi + English code-switching)
+### 1. Native Web Speech API (Frontend)
+- **Browser-Native Recognition:** Utilizes the Web Speech API (`window.webkitSpeechRecognition`) for low-latency speech input.
+- **Hinglish Optimization:** Configured with `hi-IN` (Hindi) locale to accurately capture mixed-script input (e.g., "मुझे जॉब नहीं मिल रही").
+- **Real-time Processing:** Direct speech-to-text without heavy backend audio file transfers.
 
-### 2. Multi-Task NLP Classification
+### 2. Multi-Task NLP Classification (Backend)
 Single XLM-RoBERTa transformer with 3 specialized heads:
 
 #### Sentiment Analysis
@@ -21,20 +21,18 @@ Single XLM-RoBERTa transformer with 3 specialized heads:
 - Policy-based content moderation
 
 #### Devotional Category Tagging (Multi-label)
-- Career
-- Love Life
-- Family Issues
-- Health Issues
-- Mood Issues
+- Career, Love Life, Family Issues, Health Issues, Mood Issues
 
 ## Architecture
 
 ```
-User Voice Input
+User Voice Input (Browser)
    ↓
-Whisper ASR (Backend)
+Web Speech API (hi-IN)
    ↓
-Text Normalization + Transliteration
+Transcribed Text (Devanagari/Hinglish)
+   ↓
+Text Normalization (Backend)
    ↓
 XLM-RoBERTa Multi-Task Model
    ├── Sentiment Head
@@ -43,14 +41,13 @@ XLM-RoBERTa Multi-Task Model
    ↓
 Probabilistic Outputs + Confidence Scores
    ↓
-UI Display
+UI Display (React)
 ```
 
 **Key Design Principles:**
-- Single model, single forward pass
-- Pure probabilistic inference (no keywords/rules)
-- Class-weighted loss for imbalanced data
-- Multi-label category classification
+- **Client-Side ASR:** Offloads speech recognition to the browser for speed and privacy.
+- **Single Model Inference:** One backend call handles sentiment, toxicity, and categorization.
+- **Professional UI:** Clean, single-screen interface optimized for Chrome/Edge.
 
 ## Quick Start
 
@@ -70,12 +67,6 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 
 # Install dependencies
 pip install -r requirements.txt
-
-# Generate training data (5,000 samples)
-python generate_data.py
-
-# Train the model (optional - pre-trained checkpoint included)
-python train.py
 
 # Start backend server
 python app.py
@@ -97,175 +88,30 @@ npm start
 
 Frontend runs on: **http://localhost:3000**
 
-## Model Training
+## Model Details
 
 ### Dataset
 - **5,000 synthetic Hinglish samples**
 - Distribution:
   - Sentiment: 45% negative, 30% neutral, 25% positive
   - Toxicity: 85% safe, 10% offensive, 5% spam
-  - Categories: Multi-label with mood_issues dominant
-
-### Training Configuration
-```python
-Optimizer: AdamW
-Learning Rate: 2e-5
-Batch Size: 16
-Epochs: 5
-Encoder: Frozen for 1 epoch, then unfrozen
-Loss: sentiment_loss + toxicity_loss + 0.8 * category_loss
-```
-
-### Performance
-- **Final Validation Loss: 1.25**
-- **Sentiment Accuracy: ~85%**
-- **Toxicity Precision: ~90%**
-- **Category F1: ~80%**
-
-## Testing
-
-### API Testing
-
-```bash
-# Test sentiment
-curl -X POST http://localhost:50010/analyze \
-  -H "Content-Type: application/json" \
-  -d '{"text": "Me thik hu"}'
-
-# Expected: Positive sentiment, Safe toxicity
-
-# Test toxicity
-curl -X POST http://localhost:50010/analyze \
-  -H "Content-Type: application/json" \
-  -d '{"text": "I want to kill somebody"}'
-
-# Expected: Negative sentiment, Offensive toxicity
-
-# Test neutral
-curl -X POST http://localhost:50010/analyze \
-  -H "Content-Type: application/json" \
-  -d '{"text": "Kuch khaas nahi"}'
-
-# Expected: Neutral sentiment, Safe toxicity
-```
-
-### Test Endpoint
-```bash
-curl http://localhost:50010/test
-```
-
-Returns predictions on 5 sample Hinglish queries.
+  - Categories: Multi-label with mood_issues dominance
 
 ## Project Structure
 
 ```
 krishna-ai-dashboard/
 ├── backend/
-│   ├── app.py                 # Flask API + Whisper integration
+│   ├── app.py                 # Flask API + NLP Inference
 │   ├── multitask_model.py     # Multi-task transformer model
 │   ├── train.py               # Training script
 │   ├── generate_data.py       # Synthetic data generator
-│   ├── requirements.txt       # Python dependencies
-│   ├── .env.example          # Environment variables template
-│   └── checkpoints/          # Model weights (not in Git)
-│       └── model.pt
+│   └── requirements.txt       # Python dependencies
 ├── frontend/
 │   ├── src/
-│   │   └── App.jsx           # React UI
+│   │   └── App.jsx           # React UI with Native Web Speech
 │   ├── public/
 │   └── package.json
 ├── .gitignore
 └── README.md
 ```
-
-## API Reference
-
-### POST `/analyze`
-
-**Request (Audio):**
-```bash
-curl -X POST http://localhost:50010/analyze \
-  -F "audio=@recording.wav"
-```
-
-**Request (Text):**
-```json
-{
-  "text": "Hinglish text here"
-}
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "transcription": "Me thik hu",
-  "data": {
-    "sentiment": {
-      "label": "positive",
-      "confidence": 0.993
-    },
-    "toxicity": {
-      "label": "safe",
-      "confidence": 0.998
-    },
-    "categories": [
-      {
-        "label": "mood_issues",
-        "confidence": 0.726
-      }
-    ]
-  }
-}
-```
-
-### GET `/health`
-Health check endpoint.
-
-### GET `/test`
-Run test suite on sample queries.
-
-## Technical Details
-
-### Why XLM-RoBERTa?
-- Multilingual support (100+ languages)
-- Strong performance on code-switched text
-- Pretrained on large-scale multilingual corpus
-- Efficient for production deployment
-
-### Why Multi-Task Learning?
-- Shared encoder learns better representations
-- Single forward pass (faster inference)
-- Regularization effect improves generalization
-- Efficient resource utilization
-
-### Transliteration Pipeline
-```python
-Whisper Output (Devanagari) → Indic Transliteration → Latin Script
-"मैं ठीक हूं" → "main thik hun"
-```
-
-## Moderation Policy
-
-| Condition | Action |
-|-----------|--------|
-| Toxicity > 85% | Block Krishna response |
-| Spam > 75% | Rate limit user |
-| Safe | Allow normal flow |
-
-## Future Improvements
-
-- Increase training data to 10K+ samples
-- Add temperature scaling for calibration
-- Implement GPU support for faster training
-- Add more devotional categories
-- Deploy on cloud (AWS/GCP)
-- Add user feedback loop for continuous learning
-
-## Contributing
-
-This is an internship project demonstrating:
-- Multi-task transformer architecture
-- Production ML pipeline
-- Full-stack integration (React + Flask)
-- Speech recognition + NLP
