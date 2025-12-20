@@ -1,4 +1,4 @@
-# Krishna AI Content Analyzer
+#AI Content Analyzer
 
 A production-ready **Hinglish content moderation and devotional tagging system** integrated with a real-time React frontend and a Multi-Task Transformer backend.
 
